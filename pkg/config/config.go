@@ -20,12 +20,15 @@ var (
 	ErrUnmarshalConfig      error = errors.New("failed to unmarshal config")
 	ErrLoadModule           error = errors.New("failed to load module")
 	ErrAppNameNotConfigured error = errors.New("app name is not configured")
+
+	ErrModConfigNotFound error = errors.New("module config not found")
+	ErrModuleAssertion   error = errors.New("error asserting module type")
 )
 
 var (
 	config     *Config
 	configOnce sync.Once
-	modules    []Module
+	modules    map[string]Module
 	v          *viper.Viper
 	appName    string
 )
@@ -61,11 +64,12 @@ func SetAppName(a string) {
 }
 
 func RegisterModule(module Module) {
-	modules = append(modules, module)
+	modules[module.Name()] = module
 }
 
 func GetConfig() *Config {
 	configOnce.Do(func() {
+		modules = map[string]Module{}
 		err := InitAppConfig()
 		if err != nil {
 			log.Println("Failed to initialize app config")
@@ -168,4 +172,12 @@ func DefaultConfig() *Config {
 		return nil
 	}
 	return c
+}
+
+func GetModule(name string) Module {
+	if m, ok := modules[name]; ok {
+		return m
+	}
+
+	return nil
 }
