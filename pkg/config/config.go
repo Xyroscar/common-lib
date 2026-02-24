@@ -28,10 +28,24 @@ var (
 var (
 	config     *Config
 	configOnce sync.Once
-	modules    map[string]Module
 	v          *viper.Viper
 	appName    string
 )
+
+func SetAppName(a string) {
+	appName = a
+}
+
+var (
+	modMu   sync.RWMutex
+	modules = make(map[string]Module)
+)
+
+func RegisterModule(module Module) {
+	modMu.Lock()
+	defer modMu.Unlock()
+	modules[module.Name()] = module
+}
 
 type Config struct {
 	AppName       string
@@ -59,17 +73,8 @@ type Module interface {
 	Name() string
 }
 
-func SetAppName(a string) {
-	appName = a
-}
-
-func RegisterModule(module Module) {
-	modules[module.Name()] = module
-}
-
 func GetConfig() *Config {
 	configOnce.Do(func() {
-		modules = map[string]Module{}
 		err := InitAppConfig()
 		if err != nil {
 			log.Println("Failed to initialize app config")
@@ -116,6 +121,8 @@ func InitAppConfig() error {
 		return ErrUnmarshalConfig
 	}
 
+	modMu.RLock()
+	defer modMu.RUnlock()
 	for _, module := range modules {
 		logger.Debug("Loading module", zap.String("module", module.Name()))
 		if err := module.Load(v); err != nil {
