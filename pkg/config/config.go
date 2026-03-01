@@ -9,8 +9,8 @@ import (
 	"strings"
 	"sync"
 
+	logger "github.com/xyroscar/common-lib/pkg/logger/temp"
 	"github.com/spf13/viper"
-	"github.com/xyroscar/common-lib/pkg/logger"
 	"go.uber.org/zap"
 	"gopkg.in/yaml.v3"
 )
@@ -60,6 +60,7 @@ type HostConfig struct {
 }
 
 type LoggingConfig struct {
+	LogsDir     string
 	Level       string
 	MaxFileSize int
 	MaxAge      int
