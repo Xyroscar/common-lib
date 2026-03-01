@@ -80,7 +80,7 @@ func Send(email *Email) error {
 }
 
 func sendWithStartTLS(host, port string, auth smtp.Auth, from string, to []string, msg []byte) error {
-	addr := fmt.Sprintf("%s:%s", host, port)
+	addr := net.JoinHostPort(host, port)
 
 	// Using a custom dialer so that I can control the timeout. Default smtp client uses context.Background which might timeout.
 	dialer := &net.Dialer{
