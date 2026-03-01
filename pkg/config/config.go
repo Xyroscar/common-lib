@@ -3,7 +3,6 @@ package config
 import (
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -78,12 +77,12 @@ func GetConfig() *Config {
 	configOnce.Do(func() {
 		err := InitAppConfig()
 		if err != nil {
-			log.Println("Failed to initialize app config")
+			logger.Error("Failed to initialize app config", zap.Error(err))
 			if errors.Is(err, ErrConfigNotFound) {
 				DefaultConfig()
 				err = InitAppConfig()
 				if err != nil {
-					log.Println("Failed to initialize app config")
+					logger.Error("Failed to initialize app config", zap.Error(err))
 					os.Exit(1)
 				}
 			} else {
