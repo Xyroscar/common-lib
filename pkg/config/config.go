@@ -5,11 +5,12 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"sync"
 
-	logger "github.com/xyroscar/common-lib/pkg/logger/temp"
 	"github.com/spf13/viper"
+	logger "github.com/xyroscar/common-lib/pkg/logger/temp"
 	"go.uber.org/zap"
 	"gopkg.in/yaml.v3"
 )
@@ -32,6 +33,13 @@ var (
 )
 
 func SetAppName(a string) {
+	if matched, err := regexp.MatchString("^[a-zA-Z0-9-_]*$", a); err != nil || !matched {
+		logger.Error("App name is invalid, it should only contain letters, numbers, hyphens and underscores", zap.String("app name", a))
+		if err != nil {
+			logger.Error("Error matching app name", zap.Error(err))
+		}
+		os.Exit(1)
+	}
 	appName = a
 }
 
@@ -93,6 +101,9 @@ func GetConfig() *Config {
 	return config
 }
 
+// Initializes app config. 
+// To set a custom path for the config, set the environment variable <app_name>_CONFIG_PATH
+// If the app name contains hyphens, then replace them with underscores for the environment variable
 func InitAppConfig() error {
 	if appName == "" {
 		logger.Error("App Name cannot be empty")
@@ -104,7 +115,7 @@ func InitAppConfig() error {
 	a := strings.ToUpper(appName)
 	v.SetEnvPrefix(a)
 
-	configPathVar := fmt.Sprintf("%s_CONFIG_PATH", a)
+	configPathVar := fmt.Sprintf("%s_CONFIG_PATH", strings.ReplaceAll(a, "-", "_"))
 	if os.Getenv(configPathVar) != "" {
 		v.SetConfigFile(os.Getenv(configPathVar))
 	} else {
